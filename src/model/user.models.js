@@ -1,6 +1,7 @@
 import mongoose, { Schema } from "mongoose";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import { ApiError } from "../utils/ApiError.js";
 
 const userSchema = new Schema(
   {
@@ -10,7 +11,6 @@ const userSchema = new Schema(
       unique: true,
       trim: true,
       require: [true, "UserName is required"],
-      index: true,
     },
     email: {
       type: String,
@@ -20,7 +20,6 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      lowercase: true,
       require: [true, "Password is required"],
     },
     fullName: {
@@ -30,11 +29,14 @@ const userSchema = new Schema(
       index: true,
     },
     avatar: {
-      type: String, //Cloudinary file String
-      require: true,
+      //Cloudinary file String
+      url: { type: String, require: [true, "Avatar is required"] },
+      public_id: { type: String },
     },
     coverImage: {
-      type: String, //Cloudinary file String
+      //Cloudinary file String
+      url: { type: String },
+      public_id: { type: String },
     },
 
     watchHistory: [
@@ -43,9 +45,9 @@ const userSchema = new Schema(
         ref: "Videos",
       },
     ],
-
     refreshToken: {
       type: String,
+      default: null,
     },
   },
   { timestamps: true }
@@ -54,23 +56,29 @@ const userSchema = new Schema(
 //pre-hooks
 userSchema.pre("save", async function (next) {
   //check password is changed before hasing
+
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-//custom-methods
-userSchema.methods.isPasswordCorrect = async function (password) {
+//custom-method's↗️
+
+//verify password of user's🔐
+userSchema.methods.validatePassword = async function (password) {
+  if (!password) {
+    throw new ApiError(401, "password is required");
+  }
   return await bcrypt.compare(password, this.password);
 };
 
-//generating JWT Access tokens
+//generating JWT Access tokens🔏
 userSchema.methods.createAccessToken = function () {
   return jwt.sign(
     {
       _id: this._id.toString(),
       email: this.email,
-      userName: this.userName,
+      userName: this.uName,
     },
     process.env.ACCESS_TOKEN_SECRET,
     {
@@ -79,7 +87,7 @@ userSchema.methods.createAccessToken = function () {
   );
 };
 
-//generating JWT Refresh tokens
+//generating JWT Refresh tokens🔏
 userSchema.methods.createRefreshToken = function () {
   return jwt.sign(
     {
