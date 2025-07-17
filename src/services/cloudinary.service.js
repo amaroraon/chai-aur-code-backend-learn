@@ -10,15 +10,13 @@ const uploadOnCloudinary = async (localFilePath, fileName, folderName) => {
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
 
-  if (!localFilePath || !fs.existsSync(localFilePath)) {
+  if (!(localFilePath || fs.existsSync(localFilePath))) {
     console.error("❌ Invalid localFilePath:", localFilePath);
     return null;
   }
   try {
-    if (!localFilePath) return null;
-
     // Uploading File to Cloudinary
-    const safePath = localFilePath.replace(/\\/g, "/");
+    const safePath = localFilePath;
     const uniqueID = crypto.randomBytes(16).toString("hex");
 
     const response = await cloudinary.uploader.upload(safePath, {
@@ -44,6 +42,7 @@ const uploadOnCloudinary = async (localFilePath, fileName, folderName) => {
     return response;
   } catch (error) {
     console.error("❌ Upload failed due to:", error);
+
     try {
       fs.unlinkSync(localFilePath); //deleting file from server after upload to cloudinary
     } catch (unlinkErr) {

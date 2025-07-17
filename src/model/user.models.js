@@ -55,8 +55,7 @@ const userSchema = new Schema(
 
 //pre-hooks
 userSchema.pre("save", async function (next) {
-  //check password is changed before hasing
-
+  //check password is changed before #hashing
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
@@ -66,6 +65,8 @@ userSchema.pre("save", async function (next) {
 
 //verify password of user's🔐
 userSchema.methods.validatePassword = async function (password) {
+  // console.log("verify Password🔑:", password);
+  // console.log("this Password🔑:", this.password);
   if (!password) {
     throw new ApiError(401, "password is required");
   }

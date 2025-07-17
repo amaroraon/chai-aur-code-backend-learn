@@ -27,7 +27,7 @@ const generateUserAccessTokenAndRefreshToken = async (userID) => {
 };
 
 //new user register method🔑
-export const registerUser = asyncHandler(async (req, res) => {
+const registerUser = asyncHandler(async (req, res) => {
   const { userName, fullName, email, password } = req.body;
 
   if (
@@ -91,7 +91,7 @@ export const registerUser = asyncHandler(async (req, res) => {
 });
 
 //user login method🔐
-export const loginUser = asyncHandler(async (req, res) => {
+const loginUser = asyncHandler(async (req, res) => {
   const { email, password } = req.body;
 
   //checking email & password is available or not
@@ -106,7 +106,6 @@ export const loginUser = asyncHandler(async (req, res) => {
   }
 
   const validatePassword = await user.validatePassword(password);
-  console.log("is password match,", validatePassword);
 
   if (!validatePassword) {
     throw new ApiError(401, "Invalid password");
@@ -143,7 +142,7 @@ export const loginUser = asyncHandler(async (req, res) => {
 });
 
 //user logout method🔓
-export const logoutUser = asyncHandler(async (req, res) => {
+const logoutUser = asyncHandler(async (req, res) => {
   try {
     const userId = req.user._id;
     await User.findByIdAndUpdate(
@@ -172,3 +171,16 @@ export const logoutUser = asyncHandler(async (req, res) => {
     );
   }
 });
+
+//get User🧑
+const getUser = asyncHandler(async (req, res) => {
+  const userId = req.user._id;
+  const user = await User.findById(userId).select("-password");
+
+  if (!user) {
+    throw new ApiError(400, "Failed to get user");
+  }
+  res.status(200).json(new ApiResponse(200, user, "Success to get user"));
+});
+
+export { registerUser, loginUser, logoutUser, getUser };
